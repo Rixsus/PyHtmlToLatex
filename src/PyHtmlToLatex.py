@@ -3,7 +3,8 @@
 
 from Parser.HtmlDataParser import HtmlDataParser
 from Latex.Convertor import LatexDocument
-from ConfigManager.ProgConf import ProgramConfig, ImageNotSupported
+from ConfigManager.ProgConf import ProgramConfig, ImageNotSupported,\
+    InternetPathException
 import argparse
 import sys
 from Latex.Exporter import Export
@@ -17,9 +18,9 @@ if __name__ == '__main__':
     #argumenets and options
     #
     argpar.add_argument("input_file", help = "Input html file", metavar = "InputFile")
-    argpar.add_argument("output_file", help = "Output LaTeX file", metavar = "OutputFile")
-    #argpar.add_argument("--output_file", help = "Output LaTeX file", metavar = "OutputFile")
-    argpar.add_argument("--encoding", help = "Encoding of html file", metavar = "Encoding")
+    #argpar.add_argument("output_file", help = "Output LaTeX file", metavar = "OutputFile")
+    argpar.add_argument("--output", help = "Output LaTeX file", metavar = "OutputFile")
+    argpar.add_argument("--encoding", help = "Encoding of html file")
     argpar.add_argument("--lang", help = "Custom language configuration")
     argpar.add_argument("--utf8x", help = "Use utf8x package instead utf8", action = "store_const", const = True)
     argpar.add_argument("--ascii", help = "Use only ASCII encoding for latex file", action = "store_const", const = True)
@@ -39,6 +40,9 @@ if __name__ == '__main__':
     argpar.add_argument("--color", help = "Use color", action = "store_const", const = True)
     argpar.add_argument("--stdout", help = "Use color", action = "store_const", const = True)
     argpar.add_argument("--verbose", help = "Be verbose", action = "store_const", const = True)
+    argpar.add_argument("--form", help = "Try parse HTML forms", action = "store_const", const = True)
+    argpar.add_argument("--wget", help = "Download internet page via wget", action = "store_const", const = True)
+    
     args = argpar.parse_args()
     if args.open:
         args.compile = True
@@ -49,6 +53,10 @@ if __name__ == '__main__':
         conf = ProgramConfig(args)
     except ImageNotSupported:
         print("Image not supported with latex\n")
+        argpar.print_help()
+        sys.exit(1)
+    except InternetPathException:
+        print("Please specificate output file\n")
         argpar.print_help()
         sys.exit(1)
     except:

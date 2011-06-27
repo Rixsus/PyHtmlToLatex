@@ -301,4 +301,3 @@ code2color = {color_code[i]:color_name[i] for i in range(len(color_name) - 1)}
 
 #supported languages by babel
 babel_lang = ('afrikaans', 'bahasa', 'basque', 'breton', 'bulgarian', 'catalan', 'croatian', 'czech', 'danish', 'dutch', 'english', 'USenglish', 'american', 'UKenglish', 'british', 'canadian', 'australian', 'newzealand', 'esperanto', 'estonian', 'finnish', 'french', 'francais', 'canadien', 'acadian', 'galician', 'austrian', 'german', 'germanb', 'greek', 'polutonikogreek', 'hebrew', 'magyar', 'hungarian', 'icelandic', 'interlingua', 'irish', 'italian', 'latin', 'lowersorbian', 'samin', 'norsk', 'nynorsk', 'polish', 'portuges', 'portuguese', 'brazilian', 'brazil', 'romanian', 'russian', 'scottish', 'spanish', 'slovak', 'slovene', 'swedish', 'serbian', 'turkish', 'ukrainian', 'uppersorbian', 'welsh')
-

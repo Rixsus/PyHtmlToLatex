@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 
 class PathException(Exception):pass
 class PathNotFound(PathException):pass
+class InternetPathException(PathException):pass
 class ImageNotSupported(Exception):pass
 
 #TODO: more exceptions
@@ -30,6 +31,17 @@ class ProgramConfig:
         #initialize configuration
         self._conf_parser = ConfigPar(args)
 
+        if args.input_file[0:5] == "http:":
+            self._source = args.input_file
+            self._internet = True
+        else:
+            self._source = os.path.realpath(os.path.expanduser(args.input_file))
+            self._internet = False
+            if not os.path.isfile(self._source):
+                raise PathException()
+        
+        """
+        #old behavior
         #curent working dir or destination
         if args.output_file:
             #destiantion
@@ -41,16 +53,18 @@ class ProgramConfig:
         else:
             #join CWD and name of source with .tex extension
             self._dest = os.path.join(os.getcwd(), os.path.basename(args.input_file) + ".tex")
-
-
-        if args.input_file[0:5] == "http:":
-            self._source = args.input_file
-            self._internet = True
-        else:
-            self._source = os.path.realpath(os.path.expanduser(args.input_file))
-            self._internet = False
-            if not os.path.isfile(self._source):
+        """
+        
+        if args.output is None:
+            if self._internet:
+                raise  InternetPathException()
+            self._dest = os.path.join(os.path.dirname(self._source), os.path.basename(args.input_file) + ".tex")
+        else:  
+            self._dest = os.path.realpath(os.path.expanduser(args.output))
+            if not os.path.basename(self._dest):
                 raise PathException()
+
+
 
         #create configuration
         self._create_config(args)
@@ -126,6 +140,8 @@ class ProgramConfig:
         self._init_item("color", args.color)                #do non use color
         self._init_item("verbose", args.verbose)                #do non use color
         self._init_item("ascii", args.ascii)                #ascii characters
+        self._init_item("form", args.form)                  #forms
+        self._init_item("wget", args.wget)                  #wget
 
         #package settings
         self._init_package("longtable", args.longtable)        #use longtable enviroment

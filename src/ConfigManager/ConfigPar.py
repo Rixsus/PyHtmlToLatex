@@ -57,6 +57,8 @@ class ConfigPar:
         self._config["PROGRAM"]["color"] = "0"
         self._config["PROGRAM"]["verbose"] = "0"
         self._config["PROGRAM"]["ascii"] = "0"
+        self._config["PROGRAM"]["form"] = "0"
+        self._config["PROGRAM"]["wget"] = "0"
         #section packages
         self._config["PACKAGES"] = {}
         self._config["PACKAGES"]["longtable"] = "0"

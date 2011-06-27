@@ -14,9 +14,10 @@ class Export:
         file = None
         try:
             #make dirs 
-            os.makedirs(os.path.dirname(self._conf.destination), exist_ok = True)
+            if not os.path.isdir(os.path.dirname(self._conf.destination)):
+                os.makedirs(os.path.dirname(self._conf.destination), exist_ok = True)
             #create file
-            file = open(self._conf.destination, "w")
+            file = open(self._conf.destination, "w",encoding="utf8")    #ascii encoding is valid utf8 encoding :)
             writedata = self._latex.data()
             #write data
             file.write(writedata)

@@ -7,12 +7,30 @@ from Latex.CssEntities import CSSData
 from html.entities import codepoint2name
 from subprocess import Popen, PIPE
 import ConfigManager
+from abc import ABCMeta, abstractmethod
 
 
 
 
-
-
+class ABLatex(metaclass=ABCMeta):
+    """Abstract base class for Latex entities"""
+    
+    @abstractmethod
+    def to_latex(self):
+        return ""
+    @abstractmethod
+    def plain_text(self):
+        return ""
+    @abstractmethod
+    def __str__(self):
+        return ""
+    @classmethod
+    def __subclasshook__(cls,C):
+        if cls is ABLatex:
+            if any(all(meth in X.__dict__ for meth in ("to_latex","plain_text","__str__")) for X in C.__mro__):
+                return True
+        return NotImplemented
+            
 
 
 def tag_choice(entity, config):
@@ -114,11 +132,16 @@ def tag_choice(entity, config):
         #we just ignore tag and continue parsing
         le = LatexEntity(entity, config)
     elif entity.tag == "form":
-        #ignore tag
-        sys.stderr.write("Forms not yet implemented, ignoring...\n")
+        #depend on config
+        if config["form"]:
+            le=LatexForm(entity,config)
+    elif entity.tag == "label":
+        #depend on config
+        if config["form"]:
+            le=LatexEntity(entity,config)
     elif entity.tag == "frameset":
         #TODO: implement frameset
-        sys.stderr.write("Frameset not implemented, ignoring...\n")
+        sys.stderr.write("Frameset not yet implemented, ignoring...\n")
 
     elif entity.tag == "dir":
         le = LatexDir(entity, config)
@@ -195,7 +218,7 @@ class LxText():
         return string + self._text
 
 
-class LatexEntity():
+class LatexEntity(ABLatex):
     """Base class for htmltolatex conversion"""
     def __init__(self, html, config, preTag = False, tableTag = False):
         """Initilize children elements
@@ -998,7 +1021,7 @@ class TableRows:
     def column_count(self):
         return self._column_count
 
-class Table:
+class Table(ABLatex):
     class _Cline_concat():
         """Class for formating cline statements"""
         def __init__(self, max_column):
@@ -1087,9 +1110,12 @@ class Table:
         usedtable = "tabular"
         if self._config["longtable"]:
             usedtable = "longtable"
+            
+        #beginning declaration table-> there might be some problems with babebel package, so we redefine character
         beginning = "\\begin{table}[h]\n\\catcode`\\-=12 %problem with babel package \n\\begin{" + usedtable + "}"
         align = "{" + self._vert_lin() + self._vert_lin().join(self._align) + self._vert_lin() + "}\n"
         table = self._table
+        #contents of table
         body = ""
         for i in range(len(table)):
             #ignore empty row
@@ -1097,6 +1123,7 @@ class Table:
                 break
 
             text = ""
+            
             cline = self._Cline_concat(self._column_count)
             for j in range(len(table[i])):
                 if table[i][j] is None:
@@ -1141,3 +1168,100 @@ class Table:
     def __str__(self):
         return self.to_latex()
 
+
+
+
+class LatexForm(ABLatex):
+    """Form class"""
+    #TODO: add suport for eForm http://www.ctan.org/pkg/eforms
+    def __init__(self, html, config):
+        self._html=html
+        self._config=config
+        #add hyperref
+        self._config.add_package("hyperref")
+        
+        #used for storing label properties
+        self._label=dict()
+        #used for elements
+        self._elements=[]
+        #init action
+        self._action=""
+        try:
+            self._action="["+LxText(self._html.attrs["action"])+"]"
+        except KeyError:
+            pass        
+        
+        self._parse_label()
+        self._parse_elem()
+        
+        
+        
+    def _parse_label(self):
+        for i in self._html:
+            if not isinstance(i, str):      #we want label only tags
+                if i.tag == "label":
+                    try:
+                        self._label[i.attrs["for"]]=LatexEntity(i,self._config).plain_text()
+                    except KeyError:
+                        #we dont have anythong to do
+                        pass
+    def _handle_input(self,input,text):
+        
+        label=""
+        try:
+            label=self._label[input.attrs["name"]]
+            print(label)
+        except KeyError:
+            label=str(text)
+        
+        try:
+            if input.attrs["type"]=="text":
+                self._elements.append("\\noindent \\TextField[width=\\hsize]{"+label+"}\n")
+        except KeyError:
+            pass
+        
+        
+    
+    def _handle_legend(self,input):
+        pass
+    
+    def _handle_fieldset(self,input):
+        pass
+    
+    def _handle_select(self,option):
+        pass
+
+    
+    def _handle_button(self,input):
+        pass
+    
+    def _handle_textarea(self,input):
+        pass
+    
+    
+    def _parse_elem(self):
+        text=""
+        for i in self._html:
+            if not isinstance(i, str):
+                if i.tag == "input":
+                    self._handle_input(i,text)
+                elif i.tag == "legend":
+                    self._handle_legend(i)
+                elif i.tag == "fieldset":
+                    self._handle_fieldset(i)
+                elif i.tag == "select":
+                    self._handle_select(i)
+                elif i.tag == "button":
+                    self._handle_button(i)
+                elif i.tag == "textarea":
+                    self._handle_textarea(i)
+                text=""
+            else:
+                text=LxText(i)
+    
+    def plain_text(self):
+        return ""
+    def to_latex(self):
+        return "\\begin{Form}%"+self._action+"\n"+"".join(x for x in self._elements)+"\\end{Form}"
+    def __str__(self):
+        return self.to_latex()
